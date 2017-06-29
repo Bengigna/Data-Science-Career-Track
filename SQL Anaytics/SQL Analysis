@@ -1,1 +1,51 @@
+--SQL Analytics
+ -- Investigating a Drop in User Engagement
+ 
+ /* The possible drop could be due to many resasons. Some of the possibilities include internet
+outage, public events and holidays, broken features in log in, not able to accessing the website
+and others. These hypothesis are tested using the info in the given tables */ --1) To track the trend of the growth:
+
+SELECT DATE_TRUNC('day',created_at) AS day,
+       COUNT(*) AS all_users,
+       COUNT(CASE
+                 WHEN activated_at IS NOT NULL THEN u.user_id
+                 ELSE NULL
+             END) AS activated_users
+FROM tutorial.yammer_users u
+WHERE created_at >='2014-06-01'
+  AND created_at < '2014-09-01'
+GROUP BY 1
+ORDER BY 1
+
+
+##### Second SQL
+
+/* To figure out whether loggin from different devices had some differences in patterns*/
+
+SELECT DATE_TRUNC('week',occurred_at) AS week,
+       COUNT(DISTINCT y.user_id) AS active_users_weekly,
+       COUNT(DISTINCT CASE WHEN Y.device IN ('dell inspiron notebook','mac mini','hp pavilion desktop','macbook pro','lenovo thinkpad','macbook air',
+          'asus chromebook','dell inspiron desktop','acer aspire notebook','acer aspire desktop') THEN y.user_id ELSE NULL END) AS PC,
+       COUNT(DISTINCT CASE WHEN y.device IN('samsung galaxy note','amazon fire phone','iphone 5','samsung galaxy s4','nexus 5','iphone 5s','iphone 4s','nokia lumia 635',
+       'htc one') THEN y.user_id ELSE NULL END) AS my_phone,
+       COUNT(DISTINCT CASE WHEN y.device IN('nexus 10','kindle fire','windows surface',
+        'samsumg galaxy tablet','ipad air','nexus 7','ipad mini') THEN y.user_id ELSE NULL END) AS my_tablet
+FROM tutorial.yammer_events y
+  WHERE y.event_type='engagement'
+  AND y.event_name='login'
+GROUP BY 1
+ORDER BY 1
+       
+#### Third SQL
+
+/* let us see the pattern of each email's action*/
+
+SELECT DATE_TRUNC('week', occurred_at) AS week,
+       COUNT(CASE WHEN y.action = 'email_clickthrough' THEN y.user_id ELSE NULL END) AS clickthrough_emails,
+       COUNT(CASE WHEN y.action = 'sent_reengagement_email' THEN y.user_id ELSE NULL END) AS reengagement_emails,
+       COUNT(CASE WHEN y.action = 'sent_weekly_digest' THEN y.user_id ELSE NULL END) AS emails_weekly,
+       COUNT(CASE WHEN y.action = 'email_open' THEN y.user_id ELSE NULL END) AS email_opens
+  FROM tutorial.yammer_emails y
+  GROUP BY 1
+  ORDER BY 1
 
